@@ -39,6 +39,7 @@ services:
 
   db:
     image: mongo
+    command: --replSet "rs"
     restart: always
     volumes:
       - ./dishes.js:/docker-entrypoint-initdb.d/dishes.js

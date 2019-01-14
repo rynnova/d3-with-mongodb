@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 conn = new Mongo()
+rs.initiate()
 db = conn.getDB('test')
 db.createCollection('dishes')
 db.dishes.insertMany([{
@@ -30,4 +31,7 @@ db.dishes.insertMany([{
 }, {
   name: 'meat special',
   orders: 1200
+}, {
+  name: 'meat curry',
+  orders: 800
 }])
