@@ -47,6 +47,15 @@ db.once('open', () => {
     response.send()
   })
 
+  app.delete('/expenses/:id', (request, response) => {
+    const {id: _id} = request.params
+    Expense.deleteOne({_id}, error => {
+      if (error)
+        throw error
+      response.status(204).send()
+    })
+  })
+
   io.on('connection', async socket => {
     const expenses = db.collection('expenses')
     const stream = expenses.watch()

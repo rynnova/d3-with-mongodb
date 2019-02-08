@@ -143,6 +143,11 @@ class PieChart {
       .each(function (data) { this.originalData = data })
       .transition().duration(750)
       .attrTween('d', tweenInArcs)
+
+    this.graph.selectAll('path')
+      .on('mouseover', this.handleMouseover.bind(this))
+      .on('mouseout', this.handleMouseout.bind(this))
+      .on('click', this.deleteExpense.bind(this))
   }
 
   makeArcPath(data) {
@@ -159,6 +164,28 @@ class PieChart {
       .attr('stroke-width', 3)
       .attr('fill', ({data}) => this.getColourFor(data.name))
       .transition().duration(750)
+  }
+
+  handleMouseover(data, i, paths) {
+    this.colourElement(paths[i], 'white')
+  }
+
+  colourElement(element, colour) {
+    d3.select(element)
+      .transition('colourElement').duration(300)
+      .attr('fill', colour)
+  }
+
+  handleMouseout(data, i, paths) {
+    this.colourElement(paths[i], this.getColourFor(data.data.name))
+  }
+
+  async deleteExpense({data}) {
+    try {
+      await fetch(`/api/expenses/${data._id}`, {method: 'DELETE'})
+    } catch (error) {
+      alert(error.message)
+    }
   }
 }
 
