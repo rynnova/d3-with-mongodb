@@ -15,104 +15,16 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-class BarChart {
-  // graphHeight, graph, xAxis, yAxis, scaleForXAxis, scaleForYAxis
+document.querySelector('button').addEventListener('click', async event => {
+  const name = document.querySelector('#name')
+  const cost = document.querySelector('#cost')
 
-  constructor() {
-    const margin = {top: 20, bottom: 100, right: 20, left: 100}
-    this.graphHeight = 600 - margin.top - margin.bottom
+  await fetch('/api/add', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: name.value, cost: parseFloat(cost.value) })
+  })
 
-    const graphic = d3.select('.canvas')
-      .append('svg')
-      .attr('width', 600)
-      .attr('height', 600)
-    this.graph = graphic.append('g')
-      .attr('width', 600 - margin.left - margin.right)
-      .attr('height', this.graphHeight)
-      .attr('transform', `translate(${margin.left}, ${margin.top})`)
-    this.xAxis = this.graph.append('g')
-      .attr('transform', `translate(0, ${this.graphHeight})`)
-    this.yAxis = this.graph.append('g')
-    this.init()
-  }
-
-  async init() {
-    const socket = io.connect('http://localhost')
-
-    socket.on('dishes', dishes => {
-      console.log('dishes', dishes)
-      this.data = dishes
-      this.update(this.data)
-    })
-
-    socket.on('insertDish', change => {
-      this.data.push(change.fullDocument)
-      this.update(this.data)
-      console.log('insertDish', change)
-    })
-
-    socket.on('updateDish', change => {
-      this.data.forEach(datum => {
-        if (datum._id === change.documentKey._id) {
-          const description = change.updateDescription
-          const fields = description.updatedFields
-
-          for (let key in fields)
-            datum[key] = fields[key]
-
-          for (let key in description.removedFields)
-            delete datum[key]
-        }
-      })
-
-      this.update(this.data)
-      console.log('updateDish', change)
-    })
-
-    socket.on('deleteDish', change => {
-      const doesNotHaveChangeId = datum => datum._id !== change.documentKey._id
-      this.data = this.data.filter(doesNotHaveChangeId)
-      this.update(this.data)
-    })
-  }
-
-  update(data) {
-    const domain = d3.extent(data, ({orders}) => orders)
-    this.scaleForXAxis = d3.scaleBand()
-      .domain(data.map(({name}) => name))
-      .range([0, 500])
-      .paddingInner(0.2)
-      .paddingOuter(0.2)
-
-    this.scaleForYAxis = d3.scaleLinear()
-      .domain(domain)
-      .range([this.graphHeight, 0])
-    const rects = this.graph.selectAll('rect')
-      .data(data)
-    rects.exit().remove()
-    const newRects = rects.enter().append('rect')
-    this.drawSelection(rects)
-    this.drawSelection(newRects)
-
-    this.xAxis.call(d3.axisBottom(this.scaleForXAxis))
-    this.xAxis.selectAll('text')
-      .attr('transform', 'rotate(-40)')
-      .attr('text-anchor', 'end')
-      .attr('fill', 'orange')
-    this.yAxis.call(d3.axisLeft(this.scaleForYAxis)
-      .ticks(3)
-      .tickFormat(orders => `${orders} orders`))
-  }
-
-  drawSelection(selection) {
-    return selection
-      .attr('width', this.scaleForXAxis.bandwidth)
-      .attr('height', ({orders}) => this.graphHeight - this.scaleForYAxis(orders))
-      .attr('fill', 'orange')
-      .attr('x', ({name}) => this.scaleForXAxis(name))
-      .attr('y', ({orders}) => this.scaleForYAxis(orders))
-  }
-}
-
-
-let chart = new BarChart
+  name.value = ''
+  cost.value = ''
+})

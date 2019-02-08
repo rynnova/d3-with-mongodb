@@ -35,3 +35,12 @@ db.dishes.insertMany([{
   name: 'meat curry',
   orders: 800
 }])
+
+db.createCollection('expenses')
+db.expenses.insertMany([{
+  name: 'rent',
+  cost: 500
+}, {
+  name: 'social',
+  cost: 100
+}])

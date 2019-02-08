@@ -17,6 +17,7 @@
  */
 const mongoose = require('mongoose')
 const express = require('express')
+const bodyParser = require('body-parser')
 const app = express()
 const server = require('http').Server(app)
 const io = require('socket.io')(server)
@@ -28,6 +29,9 @@ mongoose.connect('mongodb://db:27017/test?replicaSet=rs', {
 
 const db = mongoose.connection
 const Dish = mongoose.model('Dish', {name: String, orders: Number})
+const Expense = mongoose.model('Expense', {name: String, cost: Number})
+
+app.use(bodyParser.json())
 
 db.once('open', () => {
   server.listen(3000)
@@ -36,13 +40,20 @@ db.once('open', () => {
     response.send('Hello world')
   })
 
+  app.post('/add', (request, response) => {
+    const {name, cost} = request.body
+    const expense = new Expense({name, cost})
+    expense.save()
+    response.send()
+  })
+
   io.on('connection', async socket => {
-    const dishes = db.collection('dishes')
-    const stream = dishes.watch()
-    socket.emit('dishes', await Dish.find())
+    const expenses = db.collection('expenses')
+    const stream = expenses.watch()
+    socket.emit('expenses', await Expense.find())
 
     stream.on('change', change => {
-      socket.emit(`${change.operationType}Dish`, change)
+      socket.emit(`${change.operationType}Expense`, change)
     })
   })
 
