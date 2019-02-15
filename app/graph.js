@@ -49,6 +49,24 @@ class PieChart {
       .shape('circle')
       .shapePadding(10)
       .scale(this.getColourFor)
+
+    this.tooltip = d3.tip()
+      .attr('class', 'tip card')
+      .html(({data}) => `
+          <div class="name">
+            Name: ${data.name}
+          </div>
+
+          <div class="cost">
+            Cost: $${data.cost}
+          </div>
+
+          <div class="delete">
+            Click slice to delete.
+          </div>
+        `)
+
+    this.graph.call(this.tooltip)
   }
 
   handleData() {
@@ -167,7 +185,9 @@ class PieChart {
   }
 
   handleMouseover(data, i, paths) {
-    this.colourElement(paths[i], 'white')
+    const self = paths[i]
+    this.tooltip.show(data, self)
+    this.colourElement(self, 'white')
   }
 
   colourElement(element, colour) {
@@ -177,6 +197,7 @@ class PieChart {
   }
 
   handleMouseout(data, i, paths) {
+    this.tooltip.hide()
     this.colourElement(paths[i], this.getColourFor(data.data.name))
   }
 
