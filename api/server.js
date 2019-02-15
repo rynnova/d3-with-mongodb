@@ -30,17 +30,51 @@ mongoose.connect('mongodb://db:27017/test?replicaSet=rs', {
 const db = mongoose.connection
 const Dish = mongoose.model('Dish', {name: String, orders: Number})
 const Expense = mongoose.model('Expense', {name: String, cost: Number})
+const Activity = mongoose.model('Activity', {
+  name: String,
+  distance: Number,
+  date: String
+})
 
 app.use(bodyParser.json())
 
 db.once('open', () => {
+  const initialiseExpenseChanges = async socket => {
+    const names = {
+      collection: 'expenses',
+      type: 'Expense'
+    }
+
+    initialiseChanges(names, () => Expense.find())(socket)
+  }
+
+  const initialiseChanges = (names, accessor) => async socket => {
+    const {collection: name, type} = names
+    const collection = db.collection(name)
+    const changes = collection.watch()
+    socket.emit(name, await accessor())
+
+    changes.on('change', change => {
+      socket.emit(`${change.operationType}${type}`, change)
+    })
+  }
+
+  const initialiseActivityChanges = socket => {
+    const names = {
+      collection: 'activities',
+      type: 'Activity'
+    }
+
+    initialiseChanges(names, () => Activity.find())(socket)
+  }
+
   server.listen(3000)
 
   app.get('/', (request, response) => {
     response.send('Hello world')
   })
 
-  app.post('/add', (request, response) => {
+  app.post('/expenses', (request, response) => {
     const {name, cost} = request.body
     const expense = new Expense({name, cost})
     expense.save()
@@ -56,14 +90,17 @@ db.once('open', () => {
     })
   })
 
-  io.on('connection', async socket => {
-    const expenses = db.collection('expenses')
-    const stream = expenses.watch()
-    socket.emit('expenses', await Expense.find())
 
-    stream.on('change', change => {
-      socket.emit(`${change.operationType}Expense`, change)
-    })
+  app.post('/activities', (request, response) => {
+    const {name, distance} = request.body
+    const activity = new Activity({name, distance})
+    activity.save()
+    response.send()
+  })
+
+  io.on('connection', socket => {
+    initialiseExpenseChanges(socket)
+    initialiseActivityChanges(socket)
   })
 
   console.log('listening on port 3000, awaiting WebSocket connection')

@@ -15,16 +15,31 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-document.querySelector('button').addEventListener('click', async event => {
-  const name = document.querySelector('#name')
-  const cost = document.querySelector('#cost')
+class LineGraph {
+  constructor(margin, size) {
+    this.margin = margin
+    this.size = size
 
-  await fetch('/api/expenses', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: name.value, cost: parseFloat(cost.value) })
-  })
+    const element = d3.select('.canvas')
+      .append('svg')
+      .attr('width', this.size.width)
+      .attr('height', this.size.height)
 
-  name.value = ''
-  cost.value = ''
-})
+    this.container = element.append('g')
+      .attr('width', this.dimensions.width)
+      .attr('height', this.dimensions.height)
+      .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
+  }
+
+  get dimensions() {
+    return {
+      width: this.size.width - this.margin.left - this.margin.right,
+      height: this.size.height - this.margin.top - this.margin.bottom
+    }
+  }
+
+  update(data) {
+    console.log('updated', data)
+  }
+}
+
