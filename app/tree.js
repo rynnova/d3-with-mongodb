@@ -15,35 +15,20 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-.nav {
-  background: #333;
-}
+class Tree {
+  constructor(options) {
+    const {size, margin} = options
 
-button {
-  background: #333 !important;
-  margin-bottom: 20px;
-  width: 100%;
-  padding: 16px;
-  font-size: 1.6em;
-  color: white;
-  border: 0;
-  border-radius: 4px;
-  cursor: pointer;
-}
+    this.container = d3.select('.canvas')
+      .append('svg')
+      .attr('width', size.width + margin.left)
+      .attr('height', size.height + margin.top)
 
-button.active {
-  background: #00bfa5 !important;
-}
+    this.graph = this.container.append('g')
+      .attr('transform', `translate(${margin.left / 2}, ${margin.top / 2})`)
+  }
 
-form span {
-  color: #00bfa5 !important;
-}
-
-.x-axis path, .y-axis path, .x-axis line, .y-axis line {
-  stroke: #ccc;
-}
-
-.x-axis text, .y-axis text {
-  fill: #ccc;
-  font-size: 14px;
+  update(data) {
+    console.log(data)
+  }
 }

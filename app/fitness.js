@@ -21,6 +21,14 @@ const activity = document.querySelector('form span')
 const input = document.querySelector('input')
 const error = document.querySelector('form .error')
 
+const redraw = () => {
+  const action = activity.textContent
+  const activityData = data
+    .filter(({name: activity}) => activity === action)
+  console.log('activity data', activityData)
+  graph.update(activityData)
+}
+
 const makeActive = ({target}) => {
   const action = target.dataset.activity
   buttons.forEach(button => button.classList.remove('active'))
@@ -28,6 +36,7 @@ const makeActive = ({target}) => {
 
   input.setAttribute('id', action)
   activity.textContent = action
+  redraw()
 }
 
 const sendActivity = async (distance) => {
@@ -60,36 +69,34 @@ form.addEventListener('submit', event => {
     error.textContent = 'Please enter a valid distance.'
 })
 
-const graph = new LineGraph
+const graph = new LineGraph(
+  {top: 40, right: 20, bottom: 50, left: 100},
+  {width: 560, height: 400}
+)
+
 const socket = io()
 let data = []
 
 socket.on('activities', activities => {
   data = activities
-  graph.update(data)
+  redraw()
 })
 
 socket.on('insertActivity', change => {
   data.push(change.fullDocument)
-  graph.update(data)
+  redraw()
 })
 
-socket.on('updateActivity', ({documentKey: {_id: id}, updateDescription}) => {
+const updateActivity = ({documentKey: {_id: id}, fullDocument}) => {
   const index = data.findIndex(datum => datum._id === id)
-  const activity = data[index]
-  updateDescription.removedFields.forEach(field => {
-    delete activity[field]
-  })
+  data[index] = fullDocument
+  redraw()
+}
 
-  const updated = updateDescription.updatedFields
-  Object.keys(updated).forEach(key => {
-    activity[key] = updated[key]
-  })
-
-  graph.update(data)
-})
+socket.on('updateActivity', updateActivity)
+socket.on('replaceActivity', updateActivity)
 
 socket.on('deleteActivity', ({documentKey: key}) => {
   data = data.filter(datum => datum._id !== key._id)
-  graph.update(data)
+  redraw()
 })

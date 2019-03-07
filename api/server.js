@@ -36,6 +36,12 @@ const Activity = mongoose.model('Activity', {
   date: String
 })
 
+const Employee = mongoose.model('Employee', {
+  name: String,
+  parent: String,
+  department: String
+})
+
 app.use(bodyParser.json())
 
 db.once('open', () => {
@@ -57,6 +63,15 @@ db.once('open', () => {
     changes.on('change', change => {
       socket.emit(`${change.operationType}${type}`, change)
     })
+  }
+
+  const initialiseEmployeeChanges = socket => {
+    const names = {
+      collection: 'employees',
+      type: 'Employee'
+    }
+
+    initialiseChanges(names, () => Employee.find())(socket)
   }
 
   const initialiseActivityChanges = socket => {
@@ -90,17 +105,23 @@ db.once('open', () => {
     })
   })
 
-
   app.post('/activities', (request, response) => {
     const {name, distance} = request.body
-    const activity = new Activity({name, distance})
+    const activity = new Activity({name, distance, date: new Date()})
     activity.save()
+    response.send()
+  })
+
+  app.post('/employees', (request, response) => {
+    const employee = new Employee(request.body)
+    employee.save()
     response.send()
   })
 
   io.on('connection', socket => {
     initialiseExpenseChanges(socket)
     initialiseActivityChanges(socket)
+    initialiseEmployeeChanges(socket)
   })
 
   console.log('listening on port 3000, awaiting WebSocket connection')
